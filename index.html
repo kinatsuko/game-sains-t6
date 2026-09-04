@@ -333,6 +333,65 @@ img, canvas {
     max-width: 100%;
     height: auto;
 }
+
+        /* Tetapan asas untuk kontena utama */
+.game-container, .main-layout {
+    width: 100%;
+    max-width: 100vw;
+    box-sizing: border-box;
+    padding: 10px;
+}
+
+/* Memastikan susunan tajuk/dropdown tidak terpotong */
+.header-section, .bab-selector {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+select {
+    max-width: 100%;
+    word-wrap: break-word;
+}
+
+/* ===================================================
+   TUKAR KEPADA 1 KOLUM APABILA DIBUKA DI TELEFON (PORTRAIT)
+   =================================================== */
+@media screen and (max-width: 768px) {
+    /* Jika anda guna Flexbox untuk susun Pemain 1 & Pemain 2 */
+    .players-wrapper, .game-board {
+        flex-direction: column !important; /* Tukar dari kiri-kanan ke atas-bawah */
+        width: 100% !important;
+    }
+
+    /* Jika anda guna CSS Grid */
+    .players-wrapper, .game-board {
+        grid-template-columns: 1fr !important; /* Gunakan 1 kolum sahaja */
+    }
+
+    /* Melaras saiz kad soalan Pemain 1 dan Pemain 2 */
+    .player-section, .player-card {
+        width: 100% !important;
+        margin-bottom: 15px;
+        box-sizing: border-box;
+    }
+
+    /* Mengecilkan saiz teks soalan & butang supaya muat elok */
+    .question-text {
+        font-size: 0.95rem !important;
+        padding: 8px !important;
+    }
+
+    .answer-btn, .option-btn {
+        font-size: 0.85rem !important;
+        padding: 10px 5px !important;
+    }
+
+    /* Saiz animasi/gambar di atas */
+    .animation-area, .tug-of-war-container {
+        width: 100% !important;
+        height: auto !important;
+    }
+}
         
     </style>
 </head>
