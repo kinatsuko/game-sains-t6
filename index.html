@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cabaran Tarik Tali Sains Tahun 6</title>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -302,6 +303,37 @@
             pointer-events: none;
             opacity: 0.5;
         }
+
+        /* Menghilangkan margin dan memastikan latar mengikut saiz skrin */
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden; /* Mengelakkan skrin boleh digeser ke tepi */
+    box-sizing: border-box;
+}
+
+/* Kontena Utamakan Game / UI */
+#app-container, .game-container {
+    width: 100%;
+    max-width: 100vw;
+    min-height: 100vh;
+    min-height: -webkit-fill-available; /* Khusus untuk browser Mobile Safari/Chrome */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+    box-sizing: border-box;
+}
+
+/* Memastikan gambar atau canvas tidak terkeluar dari skrin */
+img, canvas {
+    max-width: 100%;
+    height: auto;
+}
+        
     </style>
 </head>
 <body>
