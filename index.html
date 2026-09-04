@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Cabaran Tarik Tali Sains Tahun 6 (IFP Dual Player)</title>
+    <title>Cabaran Tarik Tali Sains Tahun 6</title>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -24,7 +27,76 @@
             flex-direction: column;
         }
 
-        /* BAHAGIAN ATAS: ROPE / TUG OF WAR DISPLAY */
+        /* LOBBY MODAL / MENU UTAMA */
+        #lobby-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(26, 37, 47, 0.95);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .lobby-card {
+            background: #2c3e50;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            max-width: 450px;
+            width: 100%;
+        }
+
+        .lobby-card h2 { margin-top: 0; color: #f1c40f; }
+
+        .btn-mode {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-offline { background: #27ae60; color: white; }
+        .btn-online { background: #2980b9; color: white; }
+        .btn-mode:hover { transform: scale(1.02); filter: brightness(1.1); }
+
+        .room-inputs {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .room-inputs input {
+            padding: 12px;
+            font-size: 1.2rem;
+            text-align: center;
+            border-radius: 6px;
+            border: none;
+            letter-spacing: 2px;
+            font-weight: bold;
+        }
+
+        .btn-action {
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #e67e22;
+            color: white;
+        }
+
+        /* BAHAGIAN ATAS: ARENA TARIK TALI */
         #game-arena {
             height: 35vh;
             background: linear-gradient(to bottom, #87CEEB 60%, #5D9236 60%);
@@ -66,7 +138,7 @@
             height: 20px;
             display: flex;
             align-items: center;
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
 
         .rope {
@@ -93,7 +165,6 @@
             position: absolute;
             font-size: 3.5rem;
             top: -55px;
-            transition: transform 0.2s;
         }
 
         .char-p1 { left: 10%; transform: scaleX(-1); }
@@ -105,14 +176,8 @@
             background-color: #2c3e50;
             display: flex;
             align-items: center;
-            justify-content: center;
-            gap: 10px;
-            padding: 0 10px;
-        }
-
-        #chapter-selector label {
-            font-weight: bold;
-            font-size: 1.1rem;
+            justify-content: space-between;
+            padding: 0 15px;
         }
 
         #chapter-select {
@@ -125,7 +190,12 @@
             cursor: pointer;
         }
 
-        /* BAHAGIAN BAWAH: SPLIT SCREEN PLAYER 1 & PLAYER 2 */
+        #room-display {
+            font-weight: bold;
+            color: #f1c40f;
+        }
+
+        /* BAHAGIAN BAWAH: PLAYER CONTROLS */
         #controls-container {
             height: 58vh;
             display: flex;
@@ -141,14 +211,8 @@
             position: relative;
         }
 
-        #p1-zone {
-            background-color: #2980b9;
-            border-right: 4px solid #1a252f;
-        }
-
-        #p2-zone {
-            background-color: #c0392b;
-        }
+        #p1-zone { background-color: #2980b9; border-right: 4px solid #1a252f; }
+        #p2-zone { background-color: #c0392b; }
 
         .player-header {
             display: flex;
@@ -192,7 +256,6 @@
             font-weight: bold;
             border-radius: 8px;
             cursor: pointer;
-            transition: background 0.1s, transform 0.1s;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -234,11 +297,33 @@
             border-radius: 10px;
             cursor: pointer;
         }
+
+        .disabled-zone {
+            pointer-events: none;
+            opacity: 0.5;
+        }
     </style>
 </head>
 <body>
 
-    <!-- ARENA TARIK TALI (ATAS IFP) -->
+    <!-- LOBBY SELECTION MODAL -->
+    <div id="lobby-modal">
+        <div class="lobby-card">
+            <h2>TARIK TALI SAINS T6</h2>
+            <p>Pilih mod permainan anda:</p>
+            <button class="btn-mode btn-offline" onclick="startOfflineMode()">🎮 Offline (1 Peranti)</button>
+            <button class="btn-mode btn-online" onclick="showOnlineOptions()">🌐 Multiplayer (2 Peranti)</button>
+
+            <div id="online-controls" class="room-inputs">
+                <button class="btn-action" onclick="createRoom()">Cipta Bilik Baru (Host)</button>
+                <hr style="width: 100%; border: 0.5px solid #555;">
+                <input type="text" id="room-code-input" placeholder="Masukkan Kod Bilik" maxlength="4">
+                <button class="btn-action" style="background:#27ae60;" onclick="joinRoom()">Sertai Bilik</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ARENA TARIK TALI -->
     <div id="game-arena">
         <div class="flag-label">GARIS PENENTU</div>
         <div class="flag-line"></div>
@@ -251,27 +336,29 @@
         </div>
     </div>
 
-    <!-- SELEKTOR BAB SAINS TAHUN 6 -->
+    <!-- SELEKTOR BAB -->
     <div id="chapter-selector">
-        <label for="chapter-select">PILIH BAB SAINS:</label>
-        <select id="chapter-select" onchange="changeChapter()">
-            <option value="1">Bab 1: Kemahiran Saintifik</option>
-            <option value="2">Bab 2: Manusia (Pembiakan & Saraf)</option>
-            <option value="3">Bab 3: Mikroorganisma</option>
-            <option value="4">Bab 4: Interaksi Antara Hidupan</option>
-            <option value="5">Bab 5: Pemeliharaan & Pemuliharaan</option>
-            <option value="6">Bab 6: Daya & Tekanan Udara</option>
-            <option value="7">Bab 7: Kelajuan</option>
-            <option value="8">Bab 8: Pengawetan Makanan</option>
-            <option value="9">Bab 9: Bahan Buangan</option>
-            <option value="10">Bab 10: Gerhana</option>
-        </select>
+        <div>
+            <label for="chapter-select"><b>BAB:</b> </label>
+            <select id="chapter-select" onchange="changeChapter()">
+                <option value="1">Bab 1: Kemahiran Saintifik</option>
+                <option value="2">Bab 2: Manusia (Pembiakan & Saraf)</option>
+                <option value="3">Bab 3: Mikroorganisma</option>
+                <option value="4">Bab 4: Interaksi Antara Hidupan</option>
+                <option value="5">Bab 5: Pemeliharaan & Pemuliharaan</option>
+                <option value="6">Bab 6: Daya & Tekanan Udara</option>
+                <option value="7">Bab 7: Kelajuan</option>
+                <option value="8">Bab 8: Pengawetan Makanan</option>
+                <option value="9">Bab 9: Bahan Buangan</option>
+                <option value="10">Bab 10: Gerhana</option>
+            </select>
+        </div>
+        <div id="room-display">Mod: Offline</div>
     </div>
 
-    <!-- SPLIT-SCREEN DUAL PLAYER (BAWAH IFP) -->
+    <!-- SPLIT-SCREEN CONTROLS -->
     <div id="controls-container">
-        
-        <!-- PEMAIN 1 (KIRI) -->
+        <!-- PEMAIN 1 -->
         <div class="player-zone" id="p1-zone">
             <div class="player-header">
                 <span>🔵 PEMAIN 1 (KIRI)</span>
@@ -281,7 +368,7 @@
             <div class="options-grid" id="p1-options"></div>
         </div>
 
-        <!-- PEMAIN 2 (KANAN) -->
+        <!-- PEMAIN 2 -->
         <div class="player-zone" id="p2-zone">
             <div class="player-header">
                 <span>🔴 PEMAIN 2 (KANAN)</span>
@@ -290,7 +377,6 @@
             <div class="question-box" id="p2-question">Memuatkan soalan...</div>
             <div class="options-grid" id="p2-options"></div>
         </div>
-
     </div>
 
     <!-- MODAL PEMENANG -->
@@ -300,7 +386,22 @@
     </div>
 
     <script>
-        // BANK SOALAN SAINS TAHUN 6 (10 SOALAN SETIAP BAB)
+        // 1. SILA GANTIKAN DENGAN FIREBASE CONFIG ANDA
+        const firebaseConfig = {
+            apiKey: "AIzaSyCiWRS0J-CoFKYfow_mno7G1Kwb2jtanSM",
+            authDomain: "game-sains-t6.firebaseapp.com",
+            databaseURL: "https://console.firebase.google.com/project/game-sains-t6/database/game-sains-t6-default-rtdb/data/~2F",
+            projectId: "game-sains-t6",
+            storageBucket: "game-sains-t6.firebasestorage.app",
+            messagingSenderId: "70693237294",
+            appId: "1:70693237294:web:13827933ebaadc9ad3a5bf"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // BANK SOALAN (10 SOALAN SETIAP BAB)
         const questionBank = {
             1: [
                 { q: "Antara berikut, yang manakah BUKAN Kemahiran Proses Sains (KPS)?", options: ["Memerhati", "Meramal", "Mewarna", "Mengelas"], ans: 2 },
@@ -403,7 +504,7 @@
                 { q: "Apakah warna tong kitar semula untuk bahan KERTAS?", options: ["Coklat", "Jingga", "Biru", "Hijau"], ans: 2 },
                 { q: "Kesan pembuangan sampah tidak teratur boleh menyebabkan...", options: ["Banjir kilat", "Udara segar", "Tanah subur", "Air jernih"], ans: 0 },
                 { q: "Bahan buangan tidak terbiodegradasi ialah bahan yang...", options: ["Tidak boleh diuraikan oleh mikroorganisma", "Boleh mereput dengan cepat", "Berasal dari tumbuh-tumbuhan", "Mudah hancur dalam tanah"], ans: 0 },
-                { q: "Tong kitar semula berwarna JINGGA adalah untuk...", options: ["Tin aluminium, keluli dan plastik", "Kertas sahaja", "Kaca sahaja", "Sisa makanan"], ans: 0 },
+                { q: "Tong kitar semula berwarna JINGGA adalah untuk...", options: ["Tin aluminium, keluli dan plastik", "Kertas sahaja", "Kaca sahaja", "Sisa makanan"], options: 0 },
                 { q: "Tong kitar semula berwarna COKLAT digunakan untuk mengumpul...", options: ["Kaca", "Plastik", "Kertas", "Sisa toksik"], ans: 0 },
                 { q: "Amalan 5R merangkumi Reduce, Reuse, Recycle, Rethink dan...", options: ["Repair", "Remove", "Return", "React"], ans: 0 },
                 { q: "Contoh sisa toksik yang berbahaya kepada persekitaran ialah...", options: ["Bateri terpakai dan cecair kimia", "Sisa sayuran", "Surat khabar lama", "Kotak kadbod"], ans: 0 },
@@ -424,22 +525,104 @@
             ]
         };
 
-        // VARIABEL STATE PERMAINAN
+        // GAME VARIABLES
         let currentChapter = 1;
-        let ropePosition = 0; // 0 = Tengah, -100 (P1 Menang), +100 (P2 Menang)
+        let ropePosition = 0;
         let p1Score = 0;
         let p2Score = 0;
-        
         let p1CurrentQ = null;
         let p2CurrentQ = null;
 
-        // INITALIZE GAME
-        window.onload = () => {
-            loadQuestions();
-        };
+        // MULTIPLAYER VARIABLES
+        let isOnline = false;
+        let myPlayerNum = 0; // 1 or 2
+        let currentRoomCode = "";
+        let roomRef = null;
+
+        // MODE SELECTION
+        function startOfflineMode() {
+            isOnline = false;
+            document.getElementById("lobby-modal").style.display = "none";
+            document.getElementById("room-display").innerText = "Mod: Offline";
+            resetGame();
+        }
+
+        function showOnlineOptions() {
+            document.getElementById("online-controls").style.display = "flex";
+        }
+
+        function createRoom() {
+            isOnline = true;
+            myPlayerNum = 1;
+            currentRoomCode = Math.floor(1000 + Math.random() * 9000).toString();
+            roomRef = database.ref('rooms/' + currentRoomCode);
+
+            // Set Initial Data
+            roomRef.set({
+                ropePosition: 0,
+                p1Score: 0,
+                p2Score: 0,
+                chapter: 1,
+                status: "waiting"
+            });
+
+            setupOnlineListeners();
+            document.getElementById("lobby-modal").style.display = "none";
+            document.getElementById("room-display").innerText = "Bilik: " + currentRoomCode + " (Pemain 1)";
+            
+            // Disable Player 2 inputs on host screen
+            document.getElementById("p2-zone").classList.add("disabled-zone");
+            resetGame();
+        }
+
+        function joinRoom() {
+            const inputCode = document.getElementById("room-code-input").value.trim();
+            if (inputCode.length !== 4) {
+                alert("Sila masukkan 4 digit kod bilik!");
+                return;
+            }
+
+            isOnline = true;
+            myPlayerNum = 2;
+            currentRoomCode = inputCode;
+            roomRef = database.ref('rooms/' + currentRoomCode);
+
+            roomRef.once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    setupOnlineListeners();
+                    document.getElementById("lobby-modal").style.display = "none";
+                    document.getElementById("room-display").innerText = "Bilik: " + currentRoomCode + " (Pemain 2)";
+                    
+                    // Disable Player 1 inputs on client screen
+                    document.getElementById("p1-zone").classList.add("disabled-zone");
+                    resetGame();
+                } else {
+                    alert("Bilik tidak dijumpai! Sila semak kod semula.");
+                }
+            });
+        }
+
+        function setupOnlineListeners() {
+            roomRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (!data) return;
+
+                ropePosition = data.ropePosition;
+                p1Score = data.p1Score;
+                p2Score = data.p2Score;
+
+                document.getElementById("p1-score").innerText = "Mata: " + p1Score;
+                document.getElementById("p2-score").innerText = "Mata: " + p2Score;
+                updateRopeUI();
+                checkWinner();
+            });
+        }
 
         function changeChapter() {
             currentChapter = document.getElementById("chapter-select").value;
+            if (isOnline && roomRef) {
+                roomRef.update({ chapter: currentChapter });
+            }
             resetGame();
         }
 
@@ -447,8 +630,17 @@
             ropePosition = 0;
             p1Score = 0;
             p2Score = 0;
-            document.getElementById("p1-score").innerText = "Mata: " + p1Score;
-            document.getElementById("p2-score").innerText = "Mata: " + p2Score;
+
+            if (isOnline && roomRef) {
+                roomRef.update({
+                    ropePosition: 0,
+                    p1Score: 0,
+                    p2Score: 0
+                });
+            }
+
+            document.getElementById("p1-score").innerText = "Mata: 0";
+            document.getElementById("p2-score").innerText = "Mata: 0";
             document.getElementById("winner-modal").style.display = "none";
             updateRopeUI();
             loadQuestions();
@@ -484,21 +676,20 @@
         }
 
         function handleAnswer(playerNum, selectedIndex) {
+            // Sejajarkan peranan dalam mod multiplayer online
+            if (isOnline && playerNum !== myPlayerNum) return;
+
             const currentQ = (playerNum === 1) ? p1CurrentQ : p2CurrentQ;
 
             if (selectedIndex === currentQ.ans) {
-                // JAWAPAN BETUL: Tarik tali ke pihak pemain
                 if (playerNum === 1) {
-                    ropePosition -= 15; // Tarik ke kiri
+                    ropePosition -= 15;
                     p1Score += 10;
-                    document.getElementById("p1-score").innerText = "Mata: " + p1Score;
                 } else {
-                    ropePosition += 15; // Tarik ke kanan
+                    ropePosition += 15;
                     p2Score += 10;
-                    document.getElementById("p2-score").innerText = "Mata: " + p2Score;
                 }
             } else {
-                // JAWAPAN SALAH: Penalti, tali tertarik ke pihak lawan
                 if (playerNum === 1) {
                     ropePosition += 10;
                 } else {
@@ -506,10 +697,20 @@
                 }
             }
 
-            updateRopeUI();
-            checkWinner();
+            if (isOnline && roomRef) {
+                roomRef.update({
+                    ropePosition: ropePosition,
+                    p1Score: p1Score,
+                    p2Score: p2Score
+                });
+            } else {
+                document.getElementById("p1-score").innerText = "Mata: " + p1Score;
+                document.getElementById("p2-score").innerText = "Mata: " + p2Score;
+                updateRopeUI();
+                checkWinner();
+            }
 
-            // Soalan baru untuk pemain berkenaan
+            // Muat soalan baharu untuk pemain berkenaan
             if (playerNum === 1) {
                 p1CurrentQ = getRandomQuestion();
                 renderQuestion(1, p1CurrentQ);
@@ -521,10 +722,8 @@
 
         function updateRopeUI() {
             const rope = document.getElementById("rope-container");
-            // Limit julat kedudukan
             if (ropePosition < -100) ropePosition = -100;
             if (ropePosition > 100) ropePosition = 100;
-            
             rope.style.transform = `translateX(${ropePosition * 2.5}px)`;
         }
 
