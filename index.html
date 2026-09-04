@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tarik Tali Sains Tahun 6</title>
+<style>
+  * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; user-select: none; }
+  body {
+    margin: 0; padding: 0;
+    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    overflow: hidden;
+  }
+  
+  header {
+    text-align: center;
+    margin-top: 15px;
+  }
+  h1 { margin: 0; color: #0f172a; font-size: 2.2rem; }
+  p { margin: 5px 0 0; color: #475569; font-weight: 600; }
+
+  /* Game Arena (Tarik Tambang Visual) */
+  .arena {
+    position: relative;
+    width: 90%;
+    height: 180px;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 20px;
+    border: 3px solid #93c5fd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Garisan Tengah */
+  .center-line {
+    position: absolute;
+    top: 0; bottom: 0; left: 50%;
+    width: 4px;
+    background: #64748b;
+    border-dash: 4px;
+    transform: translateX(-50%);
+    z-index: 1;
+  }
+  .center-line::after {
+    content: 'GARIS PENAMAT';
+    position: absolute;
+    top: 10px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.7rem;
+    font-weight: bold;
+    color: #64748b;
+    white-space: nowrap;
+  }
+
+  /* Tali & Watak */
+  .rope-wrapper {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    transition: left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2;
+  }
+  .char { font-size: 4rem; margin: 0 -10px; }
+  .rope {
+    width: 260px;
+    height: 12px;
+    background: #b45309;
+    border-radius: 6px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+    position: relative;
+  }
+  .marker {
+    position: absolute;
+    top: -6px; left: 50%;
+    transform: translateX(-50%);
+    width: 14px; height: 24px;
+    background: #ef4444;
+    border-radius: 4px;
+  }
+
+  /* Split Screen Controls */
+  .controls-container {
+    display: flex;
+    width: 98%;
+    justify-content: space-between;
+    padding: 10px 20px 20px;
+    gap: 20px;
+  }
+
+  .player-panel {
+    flex: 1;
+    background: white;
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .blue-team { border: 4px solid #3b82f6; }
+  .red-team { border: 4px solid #ef4444; }
+
+  .team-title {
+    font-size: 1.3rem; font-weight: 800; margin-bottom: 10px;
+  }
+  .blue-title { color: #1d4ed8; }
+  .red-title { color: #b91c1c; }
+
+  .question-box {
+    width: 100%;
+    background: #f8fafc;
+    border-radius: 14px;
+    padding: 12px;
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 700;
+    min-height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #e2e8f0;
+    margin-bottom: 15px;
+  }
+
+  .options-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .opt-btn {
+    background: #f1f5f9;
+    border: 2px solid #cbd5e1;
+    border-radius: 14px;
+    padding: 14px 8px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1e293b;
+    cursor: pointer;
+    transition: all 0.1s;
+    text-align: center;
+  }
+  .opt-btn:active { transform: scale(0.96); }
+  .blue-team .opt-btn:hover { background: #dbeafe; border-color: #3b82f6; }
+  .red-team .opt-btn:hover { background: #fee2e2; border-color: #ef4444; }
+
+  /* Overlay Pemenang */
+  .winner-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.85);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+    color: white;
+  }
+  .winner-overlay h2 { font-size: 3rem; margin-bottom: 10px; }
+  .restart-btn {
+    background: #22c55e;
+    color: white; border: none;
+    padding: 15px 40px; border-radius: 14px;
+    font-size: 1.4rem; font-weight: bold;
+    cursor: pointer; margin-top: 20px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🪢 Tarik Tali Sains Tahun 6</h1>
+  <p>Jawab soalan dengan betul untuk menarik tali ke arah pasukan anda!</p>
+</header>
+
+<!-- Arena Tarik Tambang -->
+<div class="arena">
+  <div class="center-line"></div>
+  <div class="rope-wrapper" id="ropeWrapper">
+    <div class="char">🤼‍♂️</div>
+    <div class="rope"><div class="marker"></div></div>
+    <div class="char">🤼‍♀️</div>
+  </div>
+</div>
+
+<!-- Kawalan Pemain Kanan & Kiri -->
+<div class="controls-container">
+  <!-- Pasukan Biru (Kiri) -->
+  <div class="player-panel blue-team">
+    <div class="team-title blue-title">🔵 PASUKAN BIRU</div>
+    <div class="question-box" id="q-blue">Loading...</div>
+    <div class="options-grid" id="opts-blue"></div>
+  </div>
+
+  <!-- Pasukan Merah (Kanan) -->
+  <div class="player-panel red-team">
+    <div class="team-title red-title">🔴 PASUKAN MERAH</div>
+    <div class="question-box" id="q-red">Loading...</div>
+    <div class="options-grid" id="opts-red"></div>
+  </div>
+</div>
+
+<!-- Skrin Kemenangan -->
+<div class="winner-overlay" id="winnerOverlay">
+  <h2 id="winnerText">PASUKAN MENANG!</h2>
+  <button class="restart-btn" onclick="resetGame()">Main Semula 🔄</button>
+</div>
+
+<script>
+// Bank Soalan Sains Tahun 6 (DSKP & UASA)
+const bankSoalan = [
+  { q: "Apakah contoh mikroorganisma jenis Fungi?", opts: ["Yis", "Salmonella", "Amoeba", "HIV"], ans: 0 },
+  { q: "Apakah kesan persaingan antara haiwan?", opts: ["Populasi meningkat", "Kepupusan / Penghijrahan", "Daya tahan bertambah", "Pembiakan cepat"], ans: 1 },
+  { q: "Antara berikut, yang manakah membiak dengan melahirkan anak?", opts: ["Paus", "Platipus", "Kura-kura", "Burung Helang"], ans: 0 },
+  { q: "Simbiosis yang memberi keuntungan kepada kedua-dua hidupan ialah...", opts: ["Parasitisme", "Komensalisme", "Mutualisme", "Mangsatisme"], ans: 2 },
+  { q: "Organ utama dalam sistem saraf pusat manusia ialah...", opts: ["Jantung & Paru-paru", "Otak & Saraf Tunjang", "Ginjal & Hati", "Tulang & Otot"], ans: 1 },
+  { q: "Pengawetan makanan secara pengetesan menggunakan konsep...", opts: ["Penghidratan", "Pemanasan suhu tinggi", "Pengeringan", "Penyalaian"], ans: 1 },
+  { q: "Antara bahan buangan berikut, yang manakah Terbiodegradasi?", opts: ["Botol Plastik", "Sisa Makanan", "Kaca", "Tin Aluminium"], ans: 1 },
+  { q: "Apakah daya yang menentang arah pergerakan objek?", opts: ["Daya Graviti", "Daya Geseran", "Daya Magnet", "Daya Elektrik"], ans: 1 },
+  { q: "Kelajuan dihitung menggunakan rumus...", opts: ["Jarak ÷ Masa", "Masa ÷ Jarak", "Jarak × Masa", "Masa × Jarak"], ans: 0 },
+  { q: "Apakah agen pencemaran sisa pepejal utama di laut?", opts: ["Kertas", "Plastik", "Kayu", "Sisa Daun"], ans: 1 }
+];
+
+let ropePosition = 0; // -100 (Biru Menang) hingga +100 (Merah Menang)
+const STEP = 25; // Jarak tarik setiap jawapan betul
+
+let qIndexBlue = 0;
+let qIndexRed = 1;
+
+function initGame() {
+  renderQuestion('blue', qIndexBlue);
+  renderQuestion('red', qIndexRed);
+  updateRopeUI();
+}
+
+function renderQuestion(team, index) {
+  const qData = bankSoalan[index % bankSoalan.length];
+  document.getElementById(`q-${team}`).innerText = qData.q;
+  
+  const optsContainer = document.getElementById(`opts-${team}`);
+  optsContainer.innerHTML = '';
+
+  qData.opts.forEach((optText, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerText = optText;
+    btn.onclick = () => checkAnswer(team, i, qData.ans);
+    optsContainer.appendChild(btn);
+  });
+}
+
+function checkAnswer(team, chosen, correct) {
+  if (chosen === correct) {
+    if (team === 'blue') {
+      ropePosition -= STEP;
+      qIndexBlue += 2;
+      renderQuestion('blue', qIndexBlue);
+    } else {
+      ropePosition += STEP;
+      qIndexRed += 2;
+      renderQuestion('red', qIndexRed);
+    }
+  } else {
+    // Jika salah, penalti ditarik ke pihak lawan sedikit
+    if (team === 'blue') ropePosition += 10;
+    else ropePosition -= 10;
+  }
+
+  updateRopeUI();
+  checkWinner();
+}
+
+function updateRopeUI() {
+  const ropeWrapper = document.getElementById('ropeWrapper');
+  // 50% asal + offset peratusan
+  const offsetPercent = (ropePosition / 200) * 40; 
+  ropeWrapper.style.left = `calc(50% + ${offsetPercent}%)`;
+}
+
+function checkWinner() {
+  if (ropePosition <= -100) {
+    showWinner("🏆 PASUKAN BIRU MENANG!");
+  } else if (ropePosition >= 100) {
+    showWinner("🏆 PASUKAN MERAH MENANG!");
+  }
+}
+
+function showWinner(text) {
+  document.getElementById('winnerText').innerText = text;
+  document.getElementById('winnerOverlay').style.display = 'flex';
+}
+
+function resetGame() {
+  ropePosition = 0;
+  qIndexBlue = 0;
+  qIndexRed = 1;
+  document.getElementById('winnerOverlay').style.display = 'none';
+  initGame();
+}
+
+// Mula Permainan
+initGame();
+</script>
+
+</body>
+</html>
