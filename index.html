@@ -1,316 +1,545 @@
 <!DOCTYPE html>
 <html lang="ms">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tarik Tali Sains Tahun 6</title>
-<style>
-  * { box-sizing: border-box; font-family: 'Segoe UI', Arial, sans-serif; user-select: none; }
-  body {
-    margin: 0; padding: 0;
-    background: linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%);
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
-    overflow: hidden;
-  }
-  
-  header {
-    text-align: center;
-    margin-top: 15px;
-  }
-  h1 { margin: 0; color: #0f172a; font-size: 2.2rem; }
-  p { margin: 5px 0 0; color: #475569; font-weight: 600; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Cabaran Tarik Tali Sains Tahun 6 (IFP Dual Player)</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
 
-  /* Game Arena (Tarik Tambang Visual) */
-  .arena {
-    position: relative;
-    width: 90%;
-    height: 180px;
-    background: rgba(255, 255, 255, 0.6);
-    border-radius: 20px;
-    border: 3px solid #93c5fd;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-  }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a252f;
+            color: #fff;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-  /* Garisan Tengah */
-  .center-line {
-    position: absolute;
-    top: 0; bottom: 0; left: 50%;
-    width: 4px;
-    background: #64748b;
-    border-dash: 4px;
-    transform: translateX(-50%);
-    z-index: 1;
-  }
-  .center-line::after {
-    content: 'GARIS PENAMAT';
-    position: absolute;
-    top: 10px; left: 50%;
-    transform: translateX(-50%);
-    font-size: 0.7rem;
-    font-weight: bold;
-    color: #64748b;
-    white-space: nowrap;
-  }
+        /* BAHAGIAN ATAS: ROPE / TUG OF WAR DISPLAY */
+        #game-arena {
+            height: 35vh;
+            background: linear-gradient(to bottom, #87CEEB 60%, #5D9236 60%);
+            position: relative;
+            border-bottom: 5px solid #2c3e50;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-  /* Tali & Watak */
-  .rope-wrapper {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    transition: left 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 2;
-  }
-  .char { font-size: 4rem; margin: 0 -10px; }
-  .rope {
-    width: 260px;
-    height: 12px;
-    background: #b45309;
-    border-radius: 6px;
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
-    position: relative;
-  }
-  .marker {
-    position: absolute;
-    top: -6px; left: 50%;
-    transform: translateX(-50%);
-    width: 14px; height: 24px;
-    background: #ef4444;
-    border-radius: 4px;
-  }
+        .flag-line {
+            position: absolute;
+            top: 55%;
+            left: 50%;
+            transform: translateX(-50%);
+            height: 80px;
+            width: 4px;
+            background-color: #e74c3c;
+            z-index: 10;
+        }
 
-  /* Split Screen Controls */
-  .controls-container {
-    display: flex;
-    width: 98%;
-    justify-content: space-between;
-    padding: 10px 20px 20px;
-    gap: 20px;
-  }
+        .flag-label {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.6);
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
 
-  .player-panel {
-    flex: 1;
-    background: white;
-    border-radius: 24px;
-    padding: 20px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  .blue-team { border: 4px solid #3b82f6; }
-  .red-team { border: 4px solid #ef4444; }
+        #rope-container {
+            position: absolute;
+            top: 65%;
+            width: 80%;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
 
-  .team-title {
-    font-size: 1.3rem; font-weight: 800; margin-bottom: 10px;
-  }
-  .blue-title { color: #1d4ed8; }
-  .red-title { color: #b91c1c; }
+        .rope {
+            width: 100%;
+            height: 12px;
+            background: repeating-linear-gradient(45deg, #d35400, #d35400 10px, #e67e22 10px, #e67e22 20px);
+            border-radius: 6px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
 
-  .question-box {
-    width: 100%;
-    background: #f8fafc;
-    border-radius: 14px;
-    padding: 12px;
-    text-align: center;
-    font-size: 1.1rem;
-    font-weight: 700;
-    min-height: 70px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid #e2e8f0;
-    margin-bottom: 15px;
-  }
+        .marker-flag {
+            position: absolute;
+            left: 50%;
+            top: -15px;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-top: 20px solid #f1c40f;
+        }
 
-  .options-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    width: 100%;
-  }
+        .character {
+            position: absolute;
+            font-size: 3.5rem;
+            top: -55px;
+            transition: transform 0.2s;
+        }
 
-  .opt-btn {
-    background: #f1f5f9;
-    border: 2px solid #cbd5e1;
-    border-radius: 14px;
-    padding: 14px 8px;
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #1e293b;
-    cursor: pointer;
-    transition: all 0.1s;
-    text-align: center;
-  }
-  .opt-btn:active { transform: scale(0.96); }
-  .blue-team .opt-btn:hover { background: #dbeafe; border-color: #3b82f6; }
-  .red-team .opt-btn:hover { background: #fee2e2; border-color: #ef4444; }
+        .char-p1 { left: 10%; transform: scaleX(-1); }
+        .char-p2 { right: 10%; }
 
-  /* Overlay Pemenang */
-  .winner-overlay {
-    position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(15, 23, 42, 0.85);
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    z-index: 999;
-    color: white;
-  }
-  .winner-overlay h2 { font-size: 3rem; margin-bottom: 10px; }
-  .restart-btn {
-    background: #22c55e;
-    color: white; border: none;
-    padding: 15px 40px; border-radius: 14px;
-    font-size: 1.4rem; font-weight: bold;
-    cursor: pointer; margin-top: 20px;
-  }
-</style>
+        /* SELEKTOR BAB */
+        #chapter-selector {
+            height: 7vh;
+            background-color: #2c3e50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 0 10px;
+        }
+
+        #chapter-selector label {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        #chapter-select {
+            padding: 6px 12px;
+            font-size: 1rem;
+            border-radius: 5px;
+            border: none;
+            background: #ecf0f1;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* BAHAGIAN BAWAH: SPLIT SCREEN PLAYER 1 & PLAYER 2 */
+        #controls-container {
+            height: 58vh;
+            display: flex;
+            width: 100%;
+        }
+
+        .player-zone {
+            flex: 1;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+        }
+
+        #p1-zone {
+            background-color: #2980b9;
+            border-right: 4px solid #1a252f;
+        }
+
+        #p2-zone {
+            background-color: #c0392b;
+        }
+
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.2);
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .question-box {
+            background: rgba(255, 255, 255, 0.95);
+            color: #2c3e50;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            min-height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .btn-option {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            color: white;
+            padding: 18px 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.1s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 70px;
+        }
+
+        .btn-option:active {
+            transform: scale(0.96);
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        /* POPUP PEMENANG */
+        #winner-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 100;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #winner-modal h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #f1c40f;
+            text-shadow: 2px 2px 4px #000;
+        }
+
+        .btn-reset {
+            padding: 15px 30px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
 
-<header>
-  <h1>🪢 Tarik Tali Sains Tahun 6</h1>
-  <p>Jawab soalan dengan betul untuk menarik tali ke arah pasukan anda!</p>
-</header>
+    <!-- ARENA TARIK TALI (ATAS IFP) -->
+    <div id="game-arena">
+        <div class="flag-label">GARIS PENENTU</div>
+        <div class="flag-line"></div>
+        <div id="rope-container">
+            <div class="character char-p1">🤼</div>
+            <div class="rope">
+                <div class="marker-flag"></div>
+            </div>
+            <div class="character char-p2">🤼</div>
+        </div>
+    </div>
 
-<!-- Arena Tarik Tambang -->
-<div class="arena">
-  <div class="center-line"></div>
-  <div class="rope-wrapper" id="ropeWrapper">
-    <div class="char">🤼‍♂️</div>
-    <div class="rope"><div class="marker"></div></div>
-    <div class="char">🤼‍♀️</div>
-  </div>
-</div>
+    <!-- SELEKTOR BAB SAINS TAHUN 6 -->
+    <div id="chapter-selector">
+        <label for="chapter-select">PILIH BAB SAINS:</label>
+        <select id="chapter-select" onchange="changeChapter()">
+            <option value="1">Bab 1: Kemahiran Saintifik</option>
+            <option value="2">Bab 2: Manusia (Pembiakan & Saraf)</option>
+            <option value="3">Bab 3: Mikroorganisma</option>
+            <option value="4">Bab 4: Interaksi Antara Hidupan</option>
+            <option value="5">Bab 5: Pemeliharaan & Pemuliharaan</option>
+            <option value="6">Bab 6: Daya & Tekanan Udara</option>
+            <option value="7">Bab 7: Kelajuan</option>
+            <option value="8">Bab 8: Pengawetan Makanan</option>
+            <option value="9">Bab 9: Bahan Buangan</option>
+            <option value="10">Bab 10: Gerhana</option>
+        </select>
+    </div>
 
-<!-- Kawalan Pemain Kanan & Kiri -->
-<div class="controls-container">
-  <!-- Pasukan Biru (Kiri) -->
-  <div class="player-panel blue-team">
-    <div class="team-title blue-title">🔵 PASUKAN BIRU</div>
-    <div class="question-box" id="q-blue">Loading...</div>
-    <div class="options-grid" id="opts-blue"></div>
-  </div>
+    <!-- SPLIT-SCREEN DUAL PLAYER (BAWAH IFP) -->
+    <div id="controls-container">
+        
+        <!-- PEMAIN 1 (KIRI) -->
+        <div class="player-zone" id="p1-zone">
+            <div class="player-header">
+                <span>🔵 PEMAIN 1 (KIRI)</span>
+                <span id="p1-score">Mata: 0</span>
+            </div>
+            <div class="question-box" id="p1-question">Memuatkan soalan...</div>
+            <div class="options-grid" id="p1-options"></div>
+        </div>
 
-  <!-- Pasukan Merah (Kanan) -->
-  <div class="player-panel red-team">
-    <div class="team-title red-title">🔴 PASUKAN MERAH</div>
-    <div class="question-box" id="q-red">Loading...</div>
-    <div class="options-grid" id="opts-red"></div>
-  </div>
-</div>
+        <!-- PEMAIN 2 (KANAN) -->
+        <div class="player-zone" id="p2-zone">
+            <div class="player-header">
+                <span>🔴 PEMAIN 2 (KANAN)</span>
+                <span id="p2-score">Mata: 0</span>
+            </div>
+            <div class="question-box" id="p2-question">Memuatkan soalan...</div>
+            <div class="options-grid" id="p2-options"></div>
+        </div>
 
-<!-- Skrin Kemenangan -->
-<div class="winner-overlay" id="winnerOverlay">
-  <h2 id="winnerText">PASUKAN MENANG!</h2>
-  <button class="restart-btn" onclick="resetGame()">Main Semula 🔄</button>
-</div>
+    </div>
 
-<script>
-// Bank Soalan Sains Tahun 6 (DSKP & UASA)
-const bankSoalan = [
-  { q: "Apakah contoh mikroorganisma jenis Fungi?", opts: ["Yis", "Salmonella", "Amoeba", "HIV"], ans: 0 },
-  { q: "Apakah kesan persaingan antara haiwan?", opts: ["Populasi meningkat", "Kepupusan / Penghijrahan", "Daya tahan bertambah", "Pembiakan cepat"], ans: 1 },
-  { q: "Antara berikut, yang manakah membiak dengan melahirkan anak?", opts: ["Paus", "Platipus", "Kura-kura", "Burung Helang"], ans: 0 },
-  { q: "Simbiosis yang memberi keuntungan kepada kedua-dua hidupan ialah...", opts: ["Parasitisme", "Komensalisme", "Mutualisme", "Mangsatisme"], ans: 2 },
-  { q: "Organ utama dalam sistem saraf pusat manusia ialah...", opts: ["Jantung & Paru-paru", "Otak & Saraf Tunjang", "Ginjal & Hati", "Tulang & Otot"], ans: 1 },
-  { q: "Pengawetan makanan secara pengetesan menggunakan konsep...", opts: ["Penghidratan", "Pemanasan suhu tinggi", "Pengeringan", "Penyalaian"], ans: 1 },
-  { q: "Antara bahan buangan berikut, yang manakah Terbiodegradasi?", opts: ["Botol Plastik", "Sisa Makanan", "Kaca", "Tin Aluminium"], ans: 1 },
-  { q: "Apakah daya yang menentang arah pergerakan objek?", opts: ["Daya Graviti", "Daya Geseran", "Daya Magnet", "Daya Elektrik"], ans: 1 },
-  { q: "Kelajuan dihitung menggunakan rumus...", opts: ["Jarak ÷ Masa", "Masa ÷ Jarak", "Jarak × Masa", "Masa × Jarak"], ans: 0 },
-  { q: "Apakah agen pencemaran sisa pepejal utama di laut?", opts: ["Kertas", "Plastik", "Kayu", "Sisa Daun"], ans: 1 }
-];
+    <!-- MODAL PEMENANG -->
+    <div id="winner-modal">
+        <h1 id="winnerText">PEMAIN 1 MENANG!</h1>
+        <button class="btn-reset" onclick="resetGame()">Main Semula</button>
+    </div>
 
-let ropePosition = 0; // -100 (Biru Menang) hingga +100 (Merah Menang)
-const STEP = 25; // Jarak tarik setiap jawapan betul
+    <script>
+        // BANK SOALAN SAINS TAHUN 6 (10 SOALAN SETIAP BAB)
+        const questionBank = {
+            1: [
+                { q: "Antara berikut, yang manakah BUKAN Kemahiran Proses Sains (KPS)?", options: ["Memerhati", "Meramal", "Mewarna", "Mengelas"], ans: 2 },
+                { q: "Mengecam alasan awal bagi sesuatu pemerhatian dikenali sebagai...", options: ["Inferens", "Hipotesis", "Pengapungan", "Ketumpatan"], ans: 0 },
+                { q: "Apakah unit piawai bagi mengukur masa?", options: ["Meter", "Gram", "Saat", "Liter"], ans: 2 },
+                { q: "Perkara yang diubah atau dibezakan dalam eksperimen dikenali sebagai...", options: ["Pemboleh ubah dimalarkan", "Pemboleh ubah dimanipulasikan", "Pemboleh ubah bergerak balas", "Kesimpulan"], ans: 1 },
+                { q: "Perkara yang diukur atau diperhatikan hasil eksperimen dinamakan...", options: ["Pemboleh ubah dimanipulasikan", "Pemboleh ubah dimalarkan", "Pemboleh ubah bergerak balas", "Hipotesis"], ans: 2 },
+                { q: "Membuat jangkaan tentang peristiwa masa depan berdasarkan data dinamakan...", options: ["Memerhati", "Meramal", "Mengelas", "Mengukur"], ans: 1 },
+                { q: "Mengelaskan bahan berdasarkan ciri persamaan dan perbezaan ialah...", options: ["Mengelas", "Mentafsir data", "Memerhati", "Mengeksperimen"], ans: 0 },
+                { q: "Menyatakan konsep dengan menerangkan perkara yang dilakukan dan diperhatikan ialah...", options: ["Mendefinisi secara operasi", "Membuat hipotesis", "Meramal", "Mengelas"], ans: 0 },
+                { q: "Apakah alat yang sesuai untuk mengukur jisim sesuatu objek?", options: ["Pembaris", "Silinder penyukat", "Neraca tuas", "Jam randik"], ans: 2 },
+                { q: "Pernyataan umum tentang hubungan antara PM dan PB yang boleh diuji dinamakan...", options: ["Inferens", "Hipotesis", "Pemerhatian", "Kesimpulan"], ans: 1 }
+            ],
+            2: [
+                { q: "Apakah fungsi organ testis dalam sistem pembiakan lelaki?", options: ["Menghasilkan sperma", "Menghasilkan ovum", "Tempat embrio berkembang", "Mencerna makanan"], ans: 0 },
+                { q: "Di manakah tempat proses persenyawaan antara sperma dan ovum biasanya berlaku?", options: ["Uterus", "Tiub Fallopio", "Ovari", "Zakar"], ans: 1 },
+                { q: "Organ pembiakan wanita yang menghasilkan sel telur (ovum) ialah...", options: ["Uterus", "Ovari", "Tiub Fallopio", "Faraj"], ans: 1 },
+                { q: "Sistem saraf manusia terbahagi kepada dua iaitu Sistem Saraf Pusat dan...", options: ["Saraf Otot", "Saraf Tepi", "Saraf Darah", "Saraf Tulang"], ans: 1 },
+                { q: "Antara berikut, yang manakah merupakan organ utama Sistem Saraf Pusat?", options: ["Otak dan saraf tunjang", "Jantung dan paru-paru", "Mata dan telinga", "Otot dan tulang"], ans: 0 },
+                { q: "Tindakan yang dikawal secara sedar oleh otak dinamakan...", options: ["Tindakan terkawal", "Tindakan luar kawal", "Tindakan refleks", "Tindakan automatik"], ans: 0 },
+                { q: "Antara berikut, yang manakah contoh tindakan luar kawal?", options: ["Menulis", "Denyutan jantung", "Berjalan", "Bercakap"], ans: 1 },
+                { q: "Antara berikut, yang manakah BUKAN cara menjaga sistem saraf?", options: ["Tidur yang cukup", "Memakai topi keledar", "Merokok", "Makan makanan berkhasiat"], ans: 2 },
+                { q: "Apakah yang memindahkan maklumat dari organ deria ke otak?", options: ["Saraf tepi", "Salur darah", "Otot", "Tulang"], ans: 0 },
+                { q: "Tempat perkembangan embrio sehingga menjadi fetus di dalam badan wanita ialah...", options: ["Ovari", "Tiub Fallopio", "Uterus", "Testis"], ans: 2 }
+            ],
+            3: [
+                { q: "Antara berikut, yang manakah contoh mikroorganisma jenis Fungi?", options: ["Yis", "Salmonella", "Amoeba", "Virus Covid-19"], ans: 0 },
+                { q: "Mikroorganisma yang paling kecil dan hanya boleh dilihat bawah mikroskop elektron ialah...", options: ["Bakteria", "Protozoa", "Virus", "Alga"], ans: 2 },
+                { q: "Apakah proses yang menyebabkan adonan roti mengembang apabila ditambah yis?", options: ["Pernafasan yis", "Fotosintesis", "Pencairan", "Penyejatan"], ans: 0 },
+                { q: "Penyakit konjunktivitis (sakit mata) disebabkan oleh jangkitan...", options: ["Bakteria / Virus", "Fungi", "Alga", "Cacing"], ans: 0 },
+                { q: "Mikroorganisma manakah yang digunakan untuk membuat makanan seperti dadih/yoghurt?", options: ["Bakteria", "Virus", "Amoeba", "Mukor"], ans: 0 },
+                { q: "Antara berikut, yang manakah BUKAN faktor pertumbuhan mikroorganisma?", options: ["Udara", "Air", "Suhu sesuai", "Cahaya gelap melampau"], ans: 3 },
+                { q: "Penampakan tompok hijau/hitam pada roti basi menunjukkan kehadiran...", options: ["Fungi (Kulat)", "Virus", "Alga", "Protozoa"], ans: 0 },
+                { q: "Mikroorganisma yang bergerak menggunakan pseudopodia (kaki palsu) ialah...", options: ["Amoeba", "Yis", "Penicillium", "Paramecium"], ans: 0 },
+                { q: "Apakah kesan buruk mikroorganisma terhadap manusia?", options: ["Pencernaan Makanan", "Kerosakan Makanan", "Pembuatan Roti", "Penghasilan Baja"], ans: 1 },
+                { q: "Proses pembiakan mikroorganisma boleh berlaku melalui cara...", options: ["Pembelahan dedua", "Mengunyah", "Berjalan", "Membakar"], ans: 0 }
+            ],
+            4: [
+                { q: "Apakah jenis interaksi antara harimau dan rusa?", options: ["Mutualisme", "Predator-Mangsa", "Komensalisme", "Parasitisme"], ans: 1 },
+                { q: "Simbiosis yang memberi keuntungan kepada kedua-dua pihak dinamakan...", options: ["Parasitisme", "Mutualisme", "Komensalisme", "Persaingan"], ans: 1 },
+                { q: "Hubungan simbiosis antara poko sakat (orkid) dan pokok perumah ialah...", options: ["Komensalisme", "Parasitisme", "Mutualisme", "Predator"], ans: 0 },
+                { q: "Nyamuk yang menghisap darah manusia ialah contoh interaksi...", options: ["Parasitisme", "Mutualisme", "Komensalisme", "Persaingan"], ans: 0 },
+                { q: "Haiwan bersaing sesama spesies untuk mendapatkan...", options: ["Pasangan dan Wilayah", "Cahaya matahari", "Udara sahaja", "Batu"], ans: 0 },
+                { q: "Tumbuhan bersaing untuk mendapatkan air, cahaya matahari, ruang dan...", options: ["Udara", "Nutrien / Garam mineral", "Buah", "Suhu"], ans: 1 },
+                { q: "Interaksi antara dua spesies haiwan yang hidup bersama dikenali sebagai...", options: ["Simbiosis", "Fotosintesis", "Penyebaran", "Persaingan"], ans: 0 },
+                { q: "Antara berikut, haiwan manakah yang hidup secara BERSENDIRIAN?", options: ["Semut", "Harimau", "Lebah", "Serigala"], ans: 1 },
+                { q: "Antara berikut, haiwan manakah yang hidup secara BERKUMPULAN?", options: ["Gajah", "Burung Helang", "Ular Sawa", "Harimau Bintang"], ans: 0 },
+                { q: "Kelebihan haiwan yang hidup berkumpulan ialah...", options: ["Mudah dijangkiti penyakit", "Keselamatan terjamin daripada musuh", "Persaingan makanan bertambah", "Sukar memburu"], ans: 1 }
+            ],
+            5: [
+                { q: "Antara haiwan berikut, yang manakah telah PUPUS?", options: ["Penyu", "Burung Dodo", "Gajah", "Badak Sumbu"], ans: 1 },
+                { q: "Mengekalkan keadaan asal haiwan dan tumbuhan daripada musnah ialah...", options: ["Pemeliharaan", "Pemuliharaan", "Pembangunan", "Pencemaran"], ans: 0 },
+                { q: "Mengembalikan kawasan hutan yang telah diterokai kepada keadaan asal dinamakan...", options: ["Pemuliharaan", "Pengeringan", "Penebangan", "Pemeliharaan"], ans: 0 },
+                { q: "Antara berikut, yang manakah punca utama ancaman kepupusan haiwan?", options: ["Pembalakan haram", "Kitar semula", "Pusat pembiakan", "Menanam pokok"], ans: 0 },
+                { q: "Haiwan pupus seperti Harimau Tasmania tidak lagi wujud di Bumi kerana...", options: ["Pemburuan melampau", "Perpindahan ke zoo", "Perubahan iklim", "Evolusi"], ans: 0 },
+                { q: "Antara berikut, yang manakah contoh haiwan terancam di Malaysia?", options: ["Orang Utan", "Kucing", "Ayam", "Lalat"], ans: 0 },
+                { q: "Mendidik masyarakat melalui kempen kesedaran ialah langkah untuk...", options: ["Pemeliharaan & Pemuliharaan", "Memburu haiwan", "Menebang hutan", "Membakar sampah"], ans: 0 },
+                { q: "Pusat Pemuliharaan Orang Utan bertempat di...", options: ["Sepilok, Sabah", "Kuala Lumpur", "Melaka", "Langkawi"], ans: 0 },
+                { q: "Mewujudkan Taman Negara dan Hutan Simpan ialah usaha...", options: ["Pemeliharaan", "Pemuliharaan", "Penyelidikan", "Pelancongan"], ans: 0 },
+                { q: "Apakah kesan penyahutanan (penebangan hutan melampau)?", options: ["Pencemaran udara & tanah runtuh", "Hujan bertambah bersih", "Haiwan bertambah banyak", "Suhu Bumi makin sejuk"], ans: 0 }
+            ],
+            6: [
+                { q: "Daya geseran bertindak pada arah mana?", options: ["Arah yang sama dengan pergerakan", "Arah bertentangan dengan pergerakan", "Ke atas sahaja", "Ke bawah sahaja"], ans: 1 },
+                { q: "Semakin kasar permukaan, semakin ______ daya geseran.", options: ["Kecil", "Besar", "Sama", "Sifar"], ans: 1 },
+                { q: "Tekanan udara terhasil daripada...", options: ["Zarah udara melanggar permukaan", "Tarikan graviti", "Suhu panas", "Kelajuan angin"], ans: 0 },
+                { q: "Semakin tinggi dari aras laut, tekanan udara akan...", options: ["Semakin berkurang", "Semakin bertambah", "Tidak berubah", "Sifar"], ans: 0 },
+                { q: "Antara berikut, yang manakah cara MENGURANGKAN daya geseran?", options: ["Menggunakan minyak pelincir", "Menggunakan corak bunga tayar", "Menggunakan permukaan kasar", "Membuat tapak kasur berjalur"], ans: 0 },
+                { q: "Kebaikan daya geseran dalam kehidupan harian ialah...", options: ["Membolehkan kita berjalan tanpa tergelincir", "Menyebabkan tapak kasut haus", "Menghasilkan haba yang merosakkan enjin", "Pergerakan menjadi lambat"], ans: 0 },
+                { q: "Alat yang menggunakan konsep tekanan udara untuk menyedut air ialah...", options: ["Penyedut minuman (Straw)", "Pembaris", "Cermin", "Kipas angin"], ans: 0 },
+                { q: "Mengapakah cecair di dalam penyedut minuman boleh naik apabila dihisap?", options: ["Tekanan udara luar menolak cecair", "Daya geseran menarik cecair", "Graviti menolak cecair", "Cahaya menolak cecair"], ans: 0 },
+                { q: "Antara berikut, objek manakah yang menambah daya geseran?", options: ["Pola / Bunga pada tapak kasut", "Grit / Minyak gred tinggi", "Biji guli di bawah kotak", "Tepung talcum pada tangan"], ans: 0 },
+                { q: "Daya ialah...", options: ["Tarikan atau tolakan ke atas sesuatu objek", "Isi padu objek", "Kecerunan permukaan", "Kepantasan objek"], ans: 0 }
+            ],
+            7: [
+                { q: "Apakah rumus untuk mengira Kelajuan?", options: ["Kelajuan = Jarak ÷ Masa", "Kelajuan = Masa ÷ Jarak", "Kelajuan = Jarak × Masa", "Kelajuan = Jarak + Masa"], ans: 0 },
+                { q: "Apakah unit piawai bagi kelajuan kenderaan seperti kereta?", options: ["cm/s", "m/s", "km/j", "kg/h"], ans: 2 },
+                { q: "Sebuah kereta bergerak 100 km dalam 2 jam. Berapakah kelajuannya?", options: ["200 km/j", "50 km/j", "100 km/j", "25 km/j"], ans: 1 },
+                { q: "Jika kelajuan sebiji guli ialah 2 m/s, berapakah jarak dilalui dalam 5 saat?", options: ["10 meter", "2.5 meter", "7 meter", "3 meter"], ans: 0 },
+                { q: "Masa yang diambil oleh pelari A ialah 10s dan pelari B ialah 12s bagi jarak 100m. Siapa lebih laju?", options: ["Pelari A", "Pelari B", "Kedua-duanya sama", "Tidak pasti"], ans: 0 },
+                { q: "Objek yang bergerak laju akan mengambil masa yang ______ untuk sampai ke destinasi.", options: ["Lebih singkat / sedikit", "Lebih lama", "Sama", "Sangat panjang"], ans: 0 },
+                { q: "Formula mengira Jarak ialah...", options: ["Jarak = Kelajuan × Masa", "Jarak = Kelajuan ÷ Masa", "Jarak = Masa ÷ Kelajuan", "Jarak = Masa + Kelajuan"], ans: 0 },
+                { q: "Antara kenderaan berikut, yang manakah biasanya mempunyai kelajuan paling tinggi?", options: ["Kapal terbang", "Basikal", "Motosikal", "Kereta"], ans: 0 },
+                { q: "Apakah unit kelajuan yang sesuai untuk mengukur pergerakan siput?", options: ["cm/s", "km/j", "km/s", "m/jam"], ans: 0 },
+                { q: "Formula untuk mengira Masa pergerakan ialah...", options: ["Masa = Jarak ÷ Kelajuan", "Masa = Jarak × Kelajuan", "Masa = Kelajuan ÷ Jarak", "Masa = Jarak + Kelajuan"], ans: 0 }
+            ],
+            8: [
+                { q: "Mengapakah makanan menjadi rosak?", options: ["Tindakan mikroorganisma", "Terlebih masak", "Terdedah kepada lampu", "Disimpan lama"], ans: 0 },
+                { q: "Kaedah pengawetan yang menyingkirkan semua udara dari pembungkusan ialah...", options: ["Pempasteuran", "Pembungkusan Vakum", "Penjerukan", "Pemasinan"], ans: 1 },
+                { q: "Pempasteuran sesuai digunakan untuk mengawet...", options: ["Ikan", "Susu dan Jus", "Cili", "Daging lembu"], ans: 1 },
+                { q: "Kaedah pemasinan mengawet makanan dengan cara...", options: ["Menyingkirkan kelembapan / air daripada makanan", "Menaikkan suhu makanan", "Menambah bakteria", "Menutup bekas"], ans: 0 },
+                { q: "Proses merendam makanan dalam larutan gula atau cuka pekat dinamakan...", options: ["Penjerukan", "Pempasteuran", "Pendinginan", "Pengasapan"], ans: 0 },
+                { q: "Apakah tujuan pengawetan makanan dilakukan?", options: ["Membolehkan makanan tahan lebih lama", "Menambah berat makanan", "Mengubah warna makanan", "Menjadikan makanan mahal"], ans: 0 },
+                { q: "Ciri-ciri makanan yang rosak bagi susu ialah...", options: ["Berbau masam dan berketul-ketul", "Menjadi manis", "Berwarna jernih", "Mengeras"], ans: 0 },
+                { q: "Kaedah pendinginan menyimpan makanan pada suhu...", options: ["Rendah (dalam peti ais)", "Sangat tinggi", "Bilik", "Panas terik"], ans: 0 },
+                { q: "Kaedah pengetinan dan pembotolan melibatkan proses...", options: ["Pemanasan suhu tinggi untuk membunuh bakteria", "Pembekuan segera", "Penjemuran bawah matahari", "Pemotongan"], ans: 0 },
+                { q: "Pengeringan cili merah di bawah sinar matahari bertujuan untuk...", options: ["Menyingkirkan air", "Menambah bau", "Mematikan warna", "Memanjangkan saiz"], ans: 0 }
+            ],
+            9: [
+                { q: "Antara berikut, bahan buangan manakah yang TERBIODEGRADASI?", options: ["Botol plastik", "Sisa makanan", "Tin aluminium", "Cermin kaca"], ans: 1 },
+                { q: "Apakah warna tong kitar semula untuk bahan KERTAS?", options: ["Coklat", "Jingga", "Biru", "Hijau"], ans: 2 },
+                { q: "Kesan pembuangan sampah tidak teratur boleh menyebabkan...", options: ["Banjir kilat", "Udara segar", "Tanah subur", "Air jernih"], ans: 0 },
+                { q: "Bahan buangan tidak terbiodegradasi ialah bahan yang...", options: ["Tidak boleh diuraikan oleh mikroorganisma", "Boleh mereput dengan cepat", "Berasal dari tumbuh-tumbuhan", "Mudah hancur dalam tanah"], ans: 0 },
+                { q: "Tong kitar semula berwarna JINGGA adalah untuk...", options: ["Tin aluminium, keluli dan plastik", "Kertas sahaja", "Kaca sahaja", "Sisa makanan"], ans: 0 },
+                { q: "Tong kitar semula berwarna COKLAT digunakan untuk mengumpul...", options: ["Kaca", "Plastik", "Kertas", "Sisa toksik"], ans: 0 },
+                { q: "Amalan 5R merangkumi Reduce, Reuse, Recycle, Rethink dan...", options: ["Repair", "Remove", "Return", "React"], ans: 0 },
+                { q: "Contoh sisa toksik yang berbahaya kepada persekitaran ialah...", options: ["Bateri terpakai dan cecair kimia", "Sisa sayuran", "Surat khabar lama", "Kotak kadbod"], ans: 0 },
+                { q: "Pengurusan bahan buangan terancang secara pemprosesan semula dinamakan...", options: ["Kitar semula (Recycle)", "Pembakaran terbuka", "Pembuangan ke sungai", "Penebangan"], ans: 0 },
+                { q: "Apakah risiko pembuangan plastik ke dalam laut?", options: ["Menjejaskan kehidupan marin", "Pembersihan air", "Meningkatkan bilangan ikan", "Menstabilkan suhu laut"], ans: 0 }
+            ],
+            10: [
+                { q: "Gerhana Bulan berlaku apabila kedudukan susunan mengikut urutan...", options: ["Matahari - Bumi - Bulan", "Matahari - Bulan - Bumi", "Bumi - Matahari - Bulan", "Bulan - Matahari - Bumi"], ans: 0 },
+                { q: "Gerhana berlaku disebabkan sifat cahaya iaitu...", options: ["Cahaya boleh dibiaskan", "Cahaya bergerak lurus", "Cahaya boleh dipantulkan", "Cahaya ada 7 warna"], ans: 1 },
+                { q: "Fasa Gerhana Matahari hanya berlaku pada waktu...", options: ["Malam", "Siang", "Tengah malam", "Subuh"], ans: 1 },
+                { q: "Gerhana Bulan berlaku pada fasa bulan...", options: ["Bulan purnama", "Bulan sabit", "Bulan separa", "Bulan baru"], ans: 0 },
+                { q: "Kawasan bayang-bayang yang GELAP SEPENUHNYA semasa gerhana dinamakan...", options: ["Umbra", "Penumbra", "Atmospere", "Korona"], ans: 0 },
+                { q: "Kawasan bayang-bayang yang SEPARA GELAP dinamakan...", options: ["Penumbra", "Umbra", "Sfera", "Orbit"], ans: 0 },
+                { q: "Gerhana Matahari berlaku apabila kedudukan susunan mengikut urutan...", options: ["Matahari - Bulan - Bumi", "Matahari - Bumi - Bulan", "Bulan - Matahari - Bumi", "Bumi - Bulan - Matahari"], ans: 0 },
+                { q: "Apakah sifat cahaya kedua yang menyebabkan bayang-bayang terhasil semasa gerhana?", options: ["Cahaya tidak boleh menembusi objek gelap", "Cahaya bergerak lambat", "Cahaya mempunyai pelangi", "Cahaya boleh memanas"], ans: 0 },
+                { q: "Gerhana Matahari biasanya berlaku dalam tempoh masa yang...", options: ["Singkat (beberapa minit)", "Sangat panjang (berhari-hari)", "Semalaman", "24 jam"], ans: 0 },
+                { q: "Mengapakah kita tidak digalakkan melihat Gerhana Matahari secara terus tanpa perlindungan?", options: ["Boleh merosakkan retina mata", "Boleh menyebabkan pekak", "Boleh menyebabkan demam", "Boleh merosakkan kulit"], ans: 0 }
+            ]
+        };
 
-let qIndexBlue = 0;
-let qIndexRed = 1;
+        // VARIABEL STATE PERMAINAN
+        let currentChapter = 1;
+        let ropePosition = 0; // 0 = Tengah, -100 (P1 Menang), +100 (P2 Menang)
+        let p1Score = 0;
+        let p2Score = 0;
+        
+        let p1CurrentQ = null;
+        let p2CurrentQ = null;
 
-function initGame() {
-  renderQuestion('blue', qIndexBlue);
-  renderQuestion('red', qIndexRed);
-  updateRopeUI();
-}
+        // INITALIZE GAME
+        window.onload = () => {
+            loadQuestions();
+        };
 
-function renderQuestion(team, index) {
-  const qData = bankSoalan[index % bankSoalan.length];
-  document.getElementById(`q-${team}`).innerText = qData.q;
-  
-  const optsContainer = document.getElementById(`opts-${team}`);
-  optsContainer.innerHTML = '';
+        function changeChapter() {
+            currentChapter = document.getElementById("chapter-select").value;
+            resetGame();
+        }
 
-  qData.opts.forEach((optText, i) => {
-    const btn = document.createElement('button');
-    btn.className = 'opt-btn';
-    btn.innerText = optText;
-    btn.onclick = () => checkAnswer(team, i, qData.ans);
-    optsContainer.appendChild(btn);
-  });
-}
+        function resetGame() {
+            ropePosition = 0;
+            p1Score = 0;
+            p2Score = 0;
+            document.getElementById("p1-score").innerText = "Mata: " + p1Score;
+            document.getElementById("p2-score").innerText = "Mata: " + p2Score;
+            document.getElementById("winner-modal").style.display = "none";
+            updateRopeUI();
+            loadQuestions();
+        }
 
-function checkAnswer(team, chosen, correct) {
-  if (chosen === correct) {
-    if (team === 'blue') {
-      ropePosition -= STEP;
-      qIndexBlue += 2;
-      renderQuestion('blue', qIndexBlue);
-    } else {
-      ropePosition += STEP;
-      qIndexRed += 2;
-      renderQuestion('red', qIndexRed);
-    }
-  } else {
-    // Jika salah, penalti ditarik ke pihak lawan sedikit
-    if (team === 'blue') ropePosition += 10;
-    else ropePosition -= 10;
-  }
+        function getRandomQuestion() {
+            const list = questionBank[currentChapter];
+            return list[Math.floor(Math.random() * list.length)];
+        }
 
-  updateRopeUI();
-  checkWinner();
-}
+        function loadQuestions() {
+            p1CurrentQ = getRandomQuestion();
+            p2CurrentQ = getRandomQuestion();
 
-function updateRopeUI() {
-  const ropeWrapper = document.getElementById('ropeWrapper');
-  // 50% asal + offset peratusan
-  const offsetPercent = (ropePosition / 200) * 40; 
-  ropeWrapper.style.left = `calc(50% + ${offsetPercent}%)`;
-}
+            renderQuestion(1, p1CurrentQ);
+            renderQuestion(2, p2CurrentQ);
+        }
 
-function checkWinner() {
-  if (ropePosition <= -100) {
-    showWinner("🏆 PASUKAN BIRU MENANG!");
-  } else if (ropePosition >= 100) {
-    showWinner("🏆 PASUKAN MERAH MENANG!");
-  }
-}
+        function renderQuestion(playerNum, qData) {
+            const qBox = document.getElementById(`p${playerNum}-question`);
+            const optGrid = document.getElementById(`p${playerNum}-options`);
 
-function showWinner(text) {
-  document.getElementById('winnerText').innerText = text;
-  document.getElementById('winnerOverlay').style.display = 'flex';
-}
+            qBox.innerText = qData.q;
+            optGrid.innerHTML = "";
 
-function resetGame() {
-  ropePosition = 0;
-  qIndexBlue = 0;
-  qIndexRed = 1;
-  document.getElementById('winnerOverlay').style.display = 'none';
-  initGame();
-}
+            qData.options.forEach((opt, index) => {
+                const btn = document.createElement("button");
+                btn.className = "btn-option";
+                btn.innerText = opt;
+                btn.onclick = () => handleAnswer(playerNum, index);
+                optGrid.appendChild(btn);
+            });
+        }
 
-// Mula Permainan
-initGame();
-</script>
+        function handleAnswer(playerNum, selectedIndex) {
+            const currentQ = (playerNum === 1) ? p1CurrentQ : p2CurrentQ;
 
+            if (selectedIndex === currentQ.ans) {
+                // JAWAPAN BETUL: Tarik tali ke pihak pemain
+                if (playerNum === 1) {
+                    ropePosition -= 15; // Tarik ke kiri
+                    p1Score += 10;
+                    document.getElementById("p1-score").innerText = "Mata: " + p1Score;
+                } else {
+                    ropePosition += 15; // Tarik ke kanan
+                    p2Score += 10;
+                    document.getElementById("p2-score").innerText = "Mata: " + p2Score;
+                }
+            } else {
+                // JAWAPAN SALAH: Penalti, tali tertarik ke pihak lawan
+                if (playerNum === 1) {
+                    ropePosition += 10;
+                } else {
+                    ropePosition -= 10;
+                }
+            }
+
+            updateRopeUI();
+            checkWinner();
+
+            // Soalan baru untuk pemain berkenaan
+            if (playerNum === 1) {
+                p1CurrentQ = getRandomQuestion();
+                renderQuestion(1, p1CurrentQ);
+            } else {
+                p2CurrentQ = getRandomQuestion();
+                renderQuestion(2, p2CurrentQ);
+            }
+        }
+
+        function updateRopeUI() {
+            const rope = document.getElementById("rope-container");
+            // Limit julat kedudukan
+            if (ropePosition < -100) ropePosition = -100;
+            if (ropePosition > 100) ropePosition = 100;
+            
+            rope.style.transform = `translateX(${ropePosition * 2.5}px)`;
+        }
+
+        function checkWinner() {
+            if (ropePosition <= -90) {
+                showWinner("PEMAIN 1 (KIRI) MENANG! 🎉");
+            } else if (ropePosition >= 90) {
+                showWinner("PEMAIN 2 (KANAN) MENANG! 🎉");
+            }
+        }
+
+        function showWinner(text) {
+            document.getElementById("winnerText").innerText = text;
+            document.getElementById("winner-modal").style.display = "flex";
+        }
+    </script>
 </body>
 </html>
