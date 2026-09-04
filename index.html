@@ -576,219 +576,262 @@
         };
 
         // GAME VARIABLES
-        let currentChapter = 1;
-        let ropePosition = 0;
-        let p1Score = 0;
-        let p2Score = 0;
-        let p1CurrentQ = null;
-        let p2CurrentQ = null;
+let currentChapter = 1;
+let ropePosition = 0;
+let p1Score = 0;
+let p2Score = 0;
+let p1CurrentQ = null;
+let p2CurrentQ = null;
 
-        // MULTIPLAYER VARIABLES
-        let isOnline = false;
-        let myPlayerNum = 0; // 1 or 2
-        let currentRoomCode = "";
-        let roomRef = null;
+// MULTIPLAYER VARIABLES
+let isOnline = false;
+let myPlayerNum = 0; // 1 or 2 (1 = Host/Tuan Room, 2 = Guest)
+let currentRoomCode = "";
+let roomRef = null;
 
-        // MODE SELECTION
-        function startOfflineMode() {
-            isOnline = false;
-            document.getElementById("lobby-modal").style.display = "none";
-            document.getElementById("room-display").innerText = "Mod: Offline";
-            resetGame();
-        }
+// MODE SELECTION
+function startOfflineMode() {
+    isOnline = false;
+    myPlayerNum = 1; // Offline bebas mengawal
+    document.getElementById("lobby-modal").style.display = "none";
+    document.getElementById("room-display").innerText = "Mod: Offline";
+    
+    // Pastikan pilihan bab AKTIF untuk mod offline
+    document.getElementById("chapter-select").disabled = false;
+    
+    resetGame();
+}
 
-        function showOnlineOptions() {
-            document.getElementById("online-controls").style.display = "flex";
-        }
+function showOnlineOptions() {
+    document.getElementById("online-controls").style.display = "flex";
+}
 
-        function createRoom() {
-            isOnline = true;
-            myPlayerNum = 1;
-            currentRoomCode = Math.floor(1000 + Math.random() * 9000).toString();
-            roomRef = database.ref('rooms/' + currentRoomCode);
+function createRoom() {
+    isOnline = true;
+    myPlayerNum = 1; // Player 1 bertindak sebagai HOST
+    currentRoomCode = Math.floor(1000 + Math.random() * 9000).toString();
+    roomRef = database.ref('rooms/' + currentRoomCode);
 
-            // Set Initial Data
-            roomRef.set({
-                ropePosition: 0,
-                p1Score: 0,
-                p2Score: 0,
-                chapter: 1,
-                status: "waiting"
-            });
+    // Dapatkan bab semasa yang terpilih pada UI Host
+    currentChapter = document.getElementById("chapter-select").value;
+
+    // Set Initial Data di Firebase
+    roomRef.set({
+        ropePosition: 0,
+        p1Score: 0,
+        p2Score: 0,
+        chapter: currentChapter,
+        status: "waiting"
+    });
+
+    // Host BOLEH menukar bab
+    document.getElementById("chapter-select").disabled = false;
+
+    setupOnlineListeners();
+    document.getElementById("lobby-modal").style.display = "none";
+    document.getElementById("room-display").innerText = "Bilik: " + currentRoomCode + " (Pemain 1 - HOST)";
+    
+    // Disable Player 2 inputs on host screen
+    document.getElementById("p2-zone").classList.add("disabled-zone");
+    resetGame();
+}
+
+function joinRoom() {
+    const inputCode = document.getElementById("room-code-input").value.trim();
+    if (inputCode.length !== 4) {
+        alert("Sila masukkan 4 digit kod bilik!");
+        return;
+    }
+
+    isOnline = true;
+    myPlayerNum = 2; // Player 2 bertindak sebagai GUEST
+    currentRoomCode = inputCode;
+    roomRef = database.ref('rooms/' + currentRoomCode);
+
+    roomRef.once('value', (snapshot) => {
+        if (snapshot.exists()) {
+            const data = snapshot.val();
+            
+            // Sync bab mengikut tetapan Host di Firebase
+            if (data.chapter) {
+                currentChapter = data.chapter;
+                document.getElementById("chapter-select").value = currentChapter;
+            }
+
+            // KUNCI pilihan bab untuk Pemain 2 (Guest)
+            document.getElementById("chapter-select").disabled = true;
 
             setupOnlineListeners();
             document.getElementById("lobby-modal").style.display = "none";
-            document.getElementById("room-display").innerText = "Bilik: " + currentRoomCode + " (Pemain 1)";
+            document.getElementById("room-display").innerText = "Bilik: " + currentRoomCode + " (Pemain 2)";
             
-            // Disable Player 2 inputs on host screen
-            document.getElementById("p2-zone").classList.add("disabled-zone");
+            // Disable Player 1 inputs on client screen
+            document.getElementById("p1-zone").classList.add("disabled-zone");
             resetGame();
+        } else {
+            alert("Bilik tidak dijumpai! Sila semak kod semula.");
+        }
+    });
+}
+
+function setupOnlineListeners() {
+    roomRef.on('value', (snapshot) => {
+        const data = snapshot.val();
+        if (!data) return;
+
+        ropePosition = data.ropePosition;
+        p1Score = data.p1Score;
+        p2Score = data.p2Score;
+
+        // Semak jika Host menukar bab secara 'real-time'
+        if (data.chapter && data.chapter !== currentChapter) {
+            currentChapter = data.chapter;
+            document.getElementById("chapter-select").value = currentChapter;
+            loadQuestions(); // Muat semula soalan berdasarkan bab baharu Host
         }
 
-        function joinRoom() {
-            const inputCode = document.getElementById("room-code-input").value.trim();
-            if (inputCode.length !== 4) {
-                alert("Sila masukkan 4 digit kod bilik!");
-                return;
-            }
+        document.getElementById("p1-score").innerText = "Mata: " + p1Score;
+        document.getElementById("p2-score").innerText = "Mata: " + p2Score;
+        updateRopeUI();
+        checkWinner();
+    });
+}
 
-            isOnline = true;
-            myPlayerNum = 2;
-            currentRoomCode = inputCode;
-            roomRef = database.ref('rooms/' + currentRoomCode);
+function changeChapter() {
+    // Sekatan Hak Akses: Hanya Host (Pemain 1) atau Mod Offline dibenarkan menukar bab
+    if (isOnline && myPlayerNum !== 1) {
+        alert("Hanya Tuan Room (Pemain 1) yang boleh mengubah bab!");
+        document.getElementById("chapter-select").value = currentChapter; // Reset semula paparan jika digodam
+        return;
+    }
 
-            roomRef.once('value', (snapshot) => {
-                if (snapshot.exists()) {
-                    setupOnlineListeners();
-                    document.getElementById("lobby-modal").style.display = "none";
-                    document.getElementById("room-display").innerText = "Bilik: " + currentRoomCode + " (Pemain 2)";
-                    
-                    // Disable Player 1 inputs on client screen
-                    document.getElementById("p1-zone").classList.add("disabled-zone");
-                    resetGame();
-                } else {
-                    alert("Bilik tidak dijumpai! Sila semak kod semula.");
-                }
-            });
+    currentChapter = document.getElementById("chapter-select").value;
+    
+    // Kemaskini maklumat bab di Firebase supaya peranti Pemain 2 turut bertukar
+    if (isOnline && roomRef) {
+        roomRef.update({ chapter: currentChapter });
+    }
+    
+    resetGame();
+}
+
+function resetGame() {
+    ropePosition = 0;
+    p1Score = 0;
+    p2Score = 0;
+
+    // Hanya Host yang perlu kemaskini nilai reset ke Firebase untuk mengelakkan peretasan data serentak
+    if (isOnline && roomRef && myPlayerNum === 1) {
+        roomRef.update({
+            ropePosition: 0,
+            p1Score: 0,
+            p2Score: 0
+        });
+    }
+
+    document.getElementById("p1-score").innerText = "Mata: 0";
+    document.getElementById("p2-score").innerText = "Mata: 0";
+    document.getElementById("winner-modal").style.display = "none";
+    updateRopeUI();
+    loadQuestions();
+}
+
+function getRandomQuestion() {
+    const list = questionBank[currentChapter];
+    return list[Math.floor(Math.random() * list.length)];
+}
+
+function loadQuestions() {
+    p1CurrentQ = getRandomQuestion();
+    p2CurrentQ = getRandomQuestion();
+
+    renderQuestion(1, p1CurrentQ);
+    renderQuestion(2, p2CurrentQ);
+}
+
+function renderQuestion(playerNum, qData) {
+    const qBox = document.getElementById(`p${playerNum}-question`);
+    const optGrid = document.getElementById(`p${playerNum}-options`);
+
+    if (!qBox || !optGrid || !qData) return;
+
+    qBox.innerText = qData.q;
+    optGrid.innerHTML = "";
+
+    qData.options.forEach((opt, index) => {
+        const btn = document.createElement("button");
+        btn.className = "btn-option";
+        btn.innerText = opt;
+        btn.onclick = () => handleAnswer(playerNum, index);
+        optGrid.appendChild(btn);
+    });
+}
+
+function handleAnswer(playerNum, selectedIndex) {
+    // Sejajarkan peranan dalam mod multiplayer online
+    if (isOnline && playerNum !== myPlayerNum) return;
+
+    const currentQ = (playerNum === 1) ? p1CurrentQ : p2CurrentQ;
+
+    if (selectedIndex === currentQ.ans) {
+        if (playerNum === 1) {
+            ropePosition -= 15;
+            p1Score += 10;
+        } else {
+            ropePosition += 15;
+            p2Score += 10;
         }
-
-        function setupOnlineListeners() {
-            roomRef.on('value', (snapshot) => {
-                const data = snapshot.val();
-                if (!data) return;
-
-                ropePosition = data.ropePosition;
-                p1Score = data.p1Score;
-                p2Score = data.p2Score;
-
-                document.getElementById("p1-score").innerText = "Mata: " + p1Score;
-                document.getElementById("p2-score").innerText = "Mata: " + p2Score;
-                updateRopeUI();
-                checkWinner();
-            });
+    } else {
+        if (playerNum === 1) {
+            ropePosition += 10;
+        } else {
+            ropePosition -= 10;
         }
+    }
 
-        function changeChapter() {
-            currentChapter = document.getElementById("chapter-select").value;
-            if (isOnline && roomRef) {
-                roomRef.update({ chapter: currentChapter });
-            }
-            resetGame();
-        }
+    if (isOnline && roomRef) {
+        roomRef.update({
+            ropePosition: ropePosition,
+            p1Score: p1Score,
+            p2Score: p2Score
+        });
+    } else {
+        document.getElementById("p1-score").innerText = "Mata: " + p1Score;
+        document.getElementById("p2-score").innerText = "Mata: " + p2Score;
+        updateRopeUI();
+        checkWinner();
+    }
 
-        function resetGame() {
-            ropePosition = 0;
-            p1Score = 0;
-            p2Score = 0;
+    // Muat soalan baharu untuk pemain berkenaan
+    if (playerNum === 1) {
+        p1CurrentQ = getRandomQuestion();
+        renderQuestion(1, p1CurrentQ);
+    } else {
+        p2CurrentQ = getRandomQuestion();
+        renderQuestion(2, p2CurrentQ);
+    }
+}
 
-            if (isOnline && roomRef) {
-                roomRef.update({
-                    ropePosition: 0,
-                    p1Score: 0,
-                    p2Score: 0
-                });
-            }
+function updateRopeUI() {
+    const rope = document.getElementById("rope-container");
+    if (!rope) return;
+    if (ropePosition < -100) ropePosition = -100;
+    if (ropePosition > 100) ropePosition = 100;
+    rope.style.transform = `translateX(${ropePosition * 2.5}px)`;
+}
 
-            document.getElementById("p1-score").innerText = "Mata: 0";
-            document.getElementById("p2-score").innerText = "Mata: 0";
-            document.getElementById("winner-modal").style.display = "none";
-            updateRopeUI();
-            loadQuestions();
-        }
+function checkWinner() {
+    if (ropePosition <= -90) {
+        showWinner("PEMAIN 1 (KIRI) MENANG! 🎉");
+    } else if (ropePosition >= 90) {
+        showWinner("PEMAIN 2 (KANAN) MENANG! 🎉");
+    }
+}
 
-        function getRandomQuestion() {
-            const list = questionBank[currentChapter];
-            return list[Math.floor(Math.random() * list.length)];
-        }
-
-        function loadQuestions() {
-            p1CurrentQ = getRandomQuestion();
-            p2CurrentQ = getRandomQuestion();
-
-            renderQuestion(1, p1CurrentQ);
-            renderQuestion(2, p2CurrentQ);
-        }
-
-        function renderQuestion(playerNum, qData) {
-            const qBox = document.getElementById(`p${playerNum}-question`);
-            const optGrid = document.getElementById(`p${playerNum}-options`);
-
-            qBox.innerText = qData.q;
-            optGrid.innerHTML = "";
-
-            qData.options.forEach((opt, index) => {
-                const btn = document.createElement("button");
-                btn.className = "btn-option";
-                btn.innerText = opt;
-                btn.onclick = () => handleAnswer(playerNum, index);
-                optGrid.appendChild(btn);
-            });
-        }
-
-        function handleAnswer(playerNum, selectedIndex) {
-            // Sejajarkan peranan dalam mod multiplayer online
-            if (isOnline && playerNum !== myPlayerNum) return;
-
-            const currentQ = (playerNum === 1) ? p1CurrentQ : p2CurrentQ;
-
-            if (selectedIndex === currentQ.ans) {
-                if (playerNum === 1) {
-                    ropePosition -= 15;
-                    p1Score += 10;
-                } else {
-                    ropePosition += 15;
-                    p2Score += 10;
-                }
-            } else {
-                if (playerNum === 1) {
-                    ropePosition += 10;
-                } else {
-                    ropePosition -= 10;
-                }
-            }
-
-            if (isOnline && roomRef) {
-                roomRef.update({
-                    ropePosition: ropePosition,
-                    p1Score: p1Score,
-                    p2Score: p2Score
-                });
-            } else {
-                document.getElementById("p1-score").innerText = "Mata: " + p1Score;
-                document.getElementById("p2-score").innerText = "Mata: " + p2Score;
-                updateRopeUI();
-                checkWinner();
-            }
-
-            // Muat soalan baharu untuk pemain berkenaan
-            if (playerNum === 1) {
-                p1CurrentQ = getRandomQuestion();
-                renderQuestion(1, p1CurrentQ);
-            } else {
-                p2CurrentQ = getRandomQuestion();
-                renderQuestion(2, p2CurrentQ);
-            }
-        }
-
-        function updateRopeUI() {
-            const rope = document.getElementById("rope-container");
-            if (ropePosition < -100) ropePosition = -100;
-            if (ropePosition > 100) ropePosition = 100;
-            rope.style.transform = `translateX(${ropePosition * 2.5}px)`;
-        }
-
-        function checkWinner() {
-            if (ropePosition <= -90) {
-                showWinner("PEMAIN 1 (KIRI) MENANG! 🎉");
-            } else if (ropePosition >= 90) {
-                showWinner("PEMAIN 2 (KANAN) MENANG! 🎉");
-            }
-        }
-
-        function showWinner(text) {
-            document.getElementById("winnerText").innerText = text;
-            document.getElementById("winner-modal").style.display = "flex";
-        }
+function showWinner(text) {
+    document.getElementById("winnerText").innerText = text;
+    document.getElementById("winner-modal").style.display = "flex";
+}
     </script>
 </body>
 </html>
